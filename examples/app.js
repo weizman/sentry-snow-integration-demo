@@ -31,64 +31,66 @@ class HappyIntegration {
 //   }
 // }
 
-Sentry.init({
-    // Client's DSN.
-    dsn: 'https://363a337c11a64611be4845ad6e24f3ac@sentry.io/297378',
-    // An array of strings or regexps that'll be used to ignore specific errors based on their type/message
-    ignoreErrors: [/PickleRick_\d\d/, 'RangeError'],
-    // An array of strings or regexps that'll be used to ignore specific errors based on their origin url
-    denyUrls: ['external-lib.js'],
-    // An array of strings or regexps that'll be used to allow specific errors based on their origin url
-    // allowUrls: ['http://localhost:5000', 'https://browser.sentry-cdn'],
-    // Debug mode with valuable initialization/lifecycle informations.
-    debug: true,
-    // Whether SDK should be enabled or not.
-    enabled: true,
-    // Custom integrations callback
-    integrations(integrations) {
-        return [new HappyIntegration(), ...integrations];
-    },
-    // A release identifier.
-    release: '1537345109360',
-    // An environment identifier.
-    environment: 'staging',
-    // Custom event transport that will be used to send things to Sentry
-    // transport: HappyTransport,
-    // Method called for every captured event
-    async beforeSend(event, hint) {
-        // Because beforeSend and beforeBreadcrumb are async, user can fetch some data
-        // return a promise, or whatever he wants
-        // Our CustomError defined in errors.js has `someMethodAttachedToOurCustomError`
-        // which can mimick something like a network request to grab more detailed error info or something.
-        // hint is original exception that was triggered, so we check for our CustomError name
-        if (hint.originalException.name === 'CustomError') {
-            const serverData = await hint.originalException.someMethodAttachedToOurCustomError();
-            event.extra = {
-                ...event.extra,
-                serverData,
-            };
-        }
-        console.log(event);
-        return event;
-    },
-    // Method called for every captured breadcrumb
-    beforeBreadcrumb(breadcrumb, hint) {
-        // We ignore our own logger and rest of the buttons just for presentation purposes
-        if (breadcrumb.message.startsWith('Sentry Logger')) return null;
-        if (breadcrumb.category !== 'ui.click' || hint.event.target.id !== 'breadcrumb-hint') return null;
-
-        // If we have a `ui.click` type of breadcrumb, eg. clicking on a button we defined in index.html
-        // We will extract a `data-label` attribute from it and use it as a part of the message
-        if (breadcrumb.category === 'ui.click') {
-            const label = hint.event.target.dataset.label;
-            if (label) {
-                breadcrumb.message = `User clicked on a button with label "${label}"`;
+SNOW(win => {
+    Sentry.init({
+        // Client's DSN.
+        dsn: 'https://363a337c11a64611be4845ad6e24f3ac@sentry.io/297378',
+        // An array of strings or regexps that'll be used to ignore specific errors based on their type/message
+        ignoreErrors: [/PickleRick_\d\d/, 'RangeError'],
+        // An array of strings or regexps that'll be used to ignore specific errors based on their origin url
+        denyUrls: ['external-lib.js'],
+        // An array of strings or regexps that'll be used to allow specific errors based on their origin url
+        // allowUrls: ['http://localhost:5000', 'https://browser.sentry-cdn'],
+        // Debug mode with valuable initialization/lifecycle informations.
+        debug: true,
+        // Whether SDK should be enabled or not.
+        enabled: true,
+        // Custom integrations callback
+        integrations(integrations) {
+            return [new HappyIntegration(), ...integrations];
+        },
+        // A release identifier.
+        release: '1537345109360',
+        // An environment identifier.
+        environment: 'staging',
+        // Custom event transport that will be used to send things to Sentry
+        // transport: HappyTransport,
+        // Method called for every captured event
+        async beforeSend(event, hint) {
+            // Because beforeSend and beforeBreadcrumb are async, user can fetch some data
+            // return a promise, or whatever he wants
+            // Our CustomError defined in errors.js has `someMethodAttachedToOurCustomError`
+            // which can mimick something like a network request to grab more detailed error info or something.
+            // hint is original exception that was triggered, so we check for our CustomError name
+            if (hint.originalException.name === 'CustomError') {
+                const serverData = await hint.originalException.someMethodAttachedToOurCustomError();
+                event.extra = {
+                    ...event.extra,
+                    serverData,
+                };
             }
-        }
-        console.log(breadcrumb);
-        return breadcrumb;
-    },
-});
+            console.log(event);
+            return event;
+        },
+        // Method called for every captured breadcrumb
+        beforeBreadcrumb(breadcrumb, hint) {
+            // We ignore our own logger and rest of the buttons just for presentation purposes
+            if (breadcrumb.message.startsWith('Sentry Logger')) return null;
+            if (breadcrumb.category !== 'ui.click' || hint.event.target.id !== 'breadcrumb-hint') return null;
+
+            // If we have a `ui.click` type of breadcrumb, eg. clicking on a button we defined in index.html
+            // We will extract a `data-label` attribute from it and use it as a part of the message
+            if (breadcrumb.category === 'ui.click') {
+                const label = hint.event.target.dataset.label;
+                if (label) {
+                    breadcrumb.message = `User clicked on a button with label "${label}"`;
+                }
+            }
+            console.log(breadcrumb);
+            return breadcrumb;
+        },
+    }, win);
+})
 
 // Testing code, irrelevant vvvvv
 
@@ -110,15 +112,27 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.querySelector('#ignore-message').addEventListener('click', () => {
-        throw new Error('Exception that will be ignored because of this keyword => PickleRick_42 <=');
+        function x(w) {
+            throw new w.Error('Exception that will be ignored because of this keyword => PickleRick_42 <=');
+        }
+        setTimeout(x, 100, top);
+        setTimeout(x, 100, window[0]);
     });
 
     document.querySelector('#ignore-type').addEventListener('click', () => {
-        throw new RangeError("Exception that will be ignored because of it's type");
+        function x(w) {
+            throw new w.RangeError("Exception that will be ignored because of it's type");
+        }
+        setTimeout(x, 100, top);
+        setTimeout(x, 100, window[0]);
     });
 
     document.querySelector('#regular-exception').addEventListener('click', () => {
-        throw new Error(`Regular exception no. ${Date.now()}`);
+        function x(w) {
+            throw new w.Error(`Regular exception no. ${Date.now()}`);
+        }
+        setTimeout(x, 100, top);
+        setTimeout(x, 100, window[0]);
     });
 
     document.querySelector('#capture-exception').addEventListener('click', () => {

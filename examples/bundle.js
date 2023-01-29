@@ -1,6 +1,8 @@
 /*! @sentry/browser 7.34.0 (d33b88c41) | https://github.com/getsentry/sentry-javascript */
 var Sentry = (function (exports) {
 
+    let WINDOW = top;
+
     // eslint-disable-next-line @typescript-eslint/unbound-method
     const objectToString = Object.prototype.toString;
 
@@ -226,7 +228,7 @@ var Sentry = (function (exports) {
      * @deprecated Use GLOBAL_OBJ instead or WINDOW from @sentry/browser. This will be removed in v8
      */
     function getGlobalObject() {
-        return GLOBAL_OBJ;
+        return WINDOW;
     }
 
     /**
@@ -5645,8 +5647,6 @@ var Sentry = (function (exports) {
         InboundFilters: InboundFilters
     });
 
-    const WINDOW = GLOBAL_OBJ;
-
     let ignoreOnError = 0;
 
     /**
@@ -7802,7 +7802,8 @@ var Sentry = (function (exports) {
      *
      * @see {@link BrowserOptions} for documentation on configuration options.
      */
-    function init(options = {}) {
+    function init(options = {}, win = window) {
+        WINDOW = win;
         if (options.defaultIntegrations === undefined) {
             options.defaultIntegrations = defaultIntegrations;
         }
